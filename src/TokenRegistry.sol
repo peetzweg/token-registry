@@ -8,6 +8,10 @@ struct TokenInfo {
     string name;
 }
 
+struct TokenAuxiliaryyInfo {
+    string logo;
+}
+
 contract TokenRegistry {
     function readTokenInfo(address token) external view returns (TokenInfo memory) {
         ERC20 _token = ERC20(token);
@@ -27,8 +31,8 @@ contract TokenRegistry {
         bool _errored = false;
 
         // Try as provided address might not be a ERC20 token
-        try this.readTokenInfo(token) returns (TokenInfo memory data) {
-            _tokenInfo = data;
+        try this.readTokenInfo(token) returns (TokenInfo memory tokenInfo) {
+            _tokenInfo = tokenInfo;
         } catch {
             _errored = true;
         }
