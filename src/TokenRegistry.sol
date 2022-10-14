@@ -13,7 +13,7 @@ struct AuxiliaryData {
     string icon;
 }
 
-struct Data {
+struct TokenInfo {
     MetaData meta;
     AuxiliaryData auxiliary;
 }
@@ -33,11 +33,46 @@ contract TokenRegistry {
         return true;
     }
 
+    function info(address token) external view returns (TokenInfo memory, bool) {
+        bool returnErrored = false;
+
+        MetaData memory returnMetaData;
+        try this._readMetaData(token) returns (MetaData memory readMetaData) {
+            returnMetaData = readMetaData;
+        } catch {
+            returnErrored = true;
+        }
+
+        AuxiliaryData memory returnAuxiliaryData;
+        try this._readAuxiliaryData(token) returns (AuxiliaryData memory readAuxiliaryData) {
+            returnAuxiliaryData = readAuxiliaryData;
+        } catch {
+            returnErrored = true;
+        }
+
+        TokenInfo memory returnTokenInfo = TokenInfo(returnMetaData, returnAuxiliaryData);
+        return (returnTokenInfo, returnErrored);
+    }
+
+    function info(address[] memory tokens) external view returns (TokenInfo[] memory, bool[] memory) {
+        TokenInfo[] memory returnTokenInfo = new TokenInfo[](tokens.length);
+        bool[] memory returnErrored = new bool[](tokens.length);
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            (MetaData memory readMetaData, bool erroredMetaData) = this.metaData(tokens[i]);
+            (AuxiliaryData memory readAuxiliaryData, bool erroredAuxiliaryData) = this.auxiliaryData(tokens[i]);
+
+            returnTokenInfo[i] = TokenInfo(readMetaData, readAuxiliaryData);
+            returnErrored[i] = erroredMetaData || erroredAuxiliaryData;
+        }
+
+        return (returnTokenInfo, returnErrored);
+    }
+
     function metaData(address token) external view returns (MetaData memory, bool) {
         MetaData memory returnMetaData;
         bool returnErrored = false;
 
-        // Try as provided address might not be a ERC20 token
         try this._readMetaData(token) returns (MetaData memory readMetaData) {
             returnMetaData = readMetaData;
         } catch {

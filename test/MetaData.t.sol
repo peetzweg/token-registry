@@ -7,7 +7,7 @@ import {TokenRegistry, MetaData} from "../src/TokenRegistry.sol";
 import {ERC20Mock} from "../src/mocks/ERC20Mock.sol";
 import {ERC20OwnedMock} from "../src/mocks/ERC20OwnedMock.sol";
 
-contract TokenRegistryTest is Test {
+contract MetaDataTest is Test {
     TokenRegistry tokenRegistry;
 
     address owner = address(0x1);
