@@ -11,6 +11,13 @@ However, the absence of this data urges everyone who is building a human facing 
 Although these solutions do work, they are neither tamper proof nor trustless. This information is critical to how humans perceive tokens in interfaces. As described this data is most likely not provided by the token issuer and thereby at risk to be wrong, outdated or misused.
 
 
+## Potential Usage
+
+
+The functions of this contract are almost exclusively meant to be called off chain. They are meant to a convenient way to fetch this data in off-chain applications in a single readonly RPC call.
+
+// TODO add example code
+
 
 ## Contributing
 
