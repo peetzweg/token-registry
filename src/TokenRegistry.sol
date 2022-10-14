@@ -1,19 +1,66 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 import "solmate/tokens/ERC20.sol";
+import "solmate/auth/Owned.sol";
 
-struct TokenInfo {
+struct MetaData {
     string symbol;
     uint8 decimals;
     string name;
 }
 
-struct TokenAuxiliaryyInfo {
-    string logo;
+struct AuxiliaryData {
+    string icon;
+}
+
+struct Data {
+    MetaData meta;
+    AuxiliaryData auxiliary;
 }
 
 contract TokenRegistry {
-    function readTokenInfo(address token) external view returns (TokenInfo memory) {
+    event AuxiliaryDataUpdated(address indexed token, AuxiliaryData indexed data);
+
+    mapping(address => AuxiliaryData) public _auxiliaryData;
+
+    function updateAuxiliaryData(address token, AuxiliaryData memory newAuxiliaryData) external returns (bool) {
+        require(msg.sender == Owned(token).owner(), "UNAUTHORIZED");
+
+        _auxiliaryData[token] = newAuxiliaryData;
+
+        emit AuxiliaryDataUpdated(token, newAuxiliaryData);
+
+        return true;
+    }
+
+    function metaData(address token) external view returns (MetaData memory, bool) {
+        MetaData memory returnMetaData;
+        bool returnErrored = false;
+
+        // Try as provided address might not be a ERC20 token
+        try this._readMetaData(token) returns (MetaData memory readMetaData) {
+            returnMetaData = readMetaData;
+        } catch {
+            returnErrored = true;
+        }
+
+        return (returnMetaData, returnErrored);
+    }
+
+    function metaData(address[] memory tokens) external view returns (MetaData[] memory, bool[] memory) {
+        MetaData[] memory returnMetaData = new MetaData[](tokens.length);
+        bool[] memory returnErrored = new bool[](tokens.length);
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            (MetaData memory readMetaData, bool errored) = this.metaData(tokens[i]);
+            returnMetaData[i] = readMetaData;
+            returnErrored[i] = errored;
+        }
+
+        return (returnMetaData, returnErrored);
+    }
+
+    function _readMetaData(address token) external view returns (MetaData memory) {
         ERC20 _token = ERC20(token);
         string memory _name;
 
@@ -22,34 +69,38 @@ contract TokenRegistry {
             _name = name;
         } catch {}
 
-        TokenInfo memory _tokenInfo = TokenInfo(_token.symbol(), _token.decimals(), _name);
-        return (_tokenInfo);
+        MetaData memory _metaData = MetaData(_token.symbol(), _token.decimals(), _name);
+        return (_metaData);
     }
 
-    function info(address token) external view returns (TokenInfo memory, bool) {
-        TokenInfo memory _tokenInfo;
-        bool _errored = false;
+    function auxiliaryData(address token) external view returns (AuxiliaryData memory, bool) {
+        AuxiliaryData memory resultAuxiliaryData;
+        bool returnErrored = false;
 
         // Try as provided address might not be a ERC20 token
-        try this.readTokenInfo(token) returns (TokenInfo memory tokenInfo) {
-            _tokenInfo = tokenInfo;
+        try this._readAuxiliaryData(token) returns (AuxiliaryData memory readAuxiliaryData) {
+            resultAuxiliaryData = readAuxiliaryData;
         } catch {
-            _errored = true;
+            returnErrored = true;
         }
 
-        return (_tokenInfo, _errored);
+        return (resultAuxiliaryData, returnErrored);
     }
 
-    function info(address[] memory tokens) external view returns (TokenInfo[] memory, bool[] memory) {
-        TokenInfo[] memory _tokenInfos = new TokenInfo[](tokens.length);
-        bool[] memory _errored = new bool[](tokens.length);
+    function auxiliaryData(address[] memory tokens) external view returns (AuxiliaryData[] memory, bool[] memory) {
+        AuxiliaryData[] memory returnAuxiliaryData = new AuxiliaryData[](tokens.length);
+        bool[] memory returnErrored = new bool[](tokens.length);
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            (TokenInfo memory tokenInfo, bool errored) = this.info(tokens[i]);
-            _tokenInfos[i] = tokenInfo;
-            _errored[i] = errored;
+            (AuxiliaryData memory readAuxiliaryData, bool errored) = this.auxiliaryData(tokens[i]);
+            returnAuxiliaryData[i] = readAuxiliaryData;
+            returnErrored[i] = errored;
         }
 
-        return (_tokenInfos, _errored);
+        return (returnAuxiliaryData, returnErrored);
+    }
+
+    function _readAuxiliaryData(address token) external view returns (AuxiliaryData memory) {
+        return _auxiliaryData[token];
     }
 }

@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import "forge-std/Test.sol";
-import {TokenRegistry, TokenInfo} from "../src/TokenRegistry.sol";
+import {TokenRegistry, MetaData} from "../src/TokenRegistry.sol";
 import {ERC20Mock} from "../src/mocks/ERC20Mock.sol";
 import {ERC20OwnedMock} from "../src/mocks/ERC20OwnedMock.sol";
 
@@ -22,7 +22,7 @@ contract TokenRegistryTest is Test {
     }
 
     function testInfoSingleToken() public {
-        (TokenInfo memory result, bool errored) = tokenRegistry.info(address(erc20Mock));
+        (MetaData memory result, bool errored) = tokenRegistry.metaData(address(erc20Mock));
         assertEq(errored, false);
         assertEq(result.name, "ERC20Mock");
         assertEq(result.symbol, "ERC20");
@@ -34,7 +34,7 @@ contract TokenRegistryTest is Test {
         tokens[0] = address(erc20Mock);
         tokens[1] = address(erc20OwnedMock);
 
-        (TokenInfo[] memory results, bool[] memory errored) = tokenRegistry.info(tokens);
+        (MetaData[] memory results, bool[] memory errored) = tokenRegistry.metaData(tokens);
         assertEq(errored[0], false);
         assertEq(results[0].name, "ERC20Mock");
         assertEq(results[0].symbol, "ERC20");
@@ -47,7 +47,7 @@ contract TokenRegistryTest is Test {
     }
 
     function testErrorOnEOA() public {
-        (, bool errored) = tokenRegistry.info(owner);
+        (, bool errored) = tokenRegistry.metaData(owner);
         assertEq(errored, true);
     }
 }
